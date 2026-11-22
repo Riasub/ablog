@@ -1,0 +1,95 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>{{PAGE_TITLE}}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 한 단 문서: 위에 복사 순서(제목 → 본문 → 태그), 아래에 실제로 붙여 넣을 본문 */
+:root {
+  --bg: #f6f7f5; --paper: #ffffff; --fg: #1f2421; --muted: #66706a; --line: #dfe3df;
+  --accent: #17834f; --accent-fg: #ffffff; --warn-bg: #fff6df; --warn-line: #e6c36a;
+  --font: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151816; --paper: #1d211f; --fg: #e7ebe8; --muted: #9aa59f; --line: #333a36;
+  --accent: #3fbf7f; --accent-fg: #0d1a13; --warn-bg: #33301f; --warn-line: #7d6a33; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #151816; --paper: #1d211f; --fg: #e7ebe8; --muted: #9aa59f; --line: #333a36;
+  --accent: #3fbf7f; --accent-fg: #0d1a13; --warn-bg: #33301f; --warn-line: #7d6a33; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 16px/1.75 var(--font); word-break: keep-all; overflow-wrap: anywhere; }
+.wrap { max-width: 720px; margin: 0 auto; padding-block: 24px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+h1 { font-size: 1.15rem; margin: 0; color: var(--muted); font-weight: 500; }
+h2 { font-size: 1rem; margin: 0 0 6px; }
+.step { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+  display: grid; gap: 10px; min-width: 0; }
+.step-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.step-label { font-size: .8rem; letter-spacing: .06em; color: var(--muted); }
+.value { font-weight: 700; font-size: 1.1rem; }
+.tags { color: var(--accent); }
+button { font: inherit; font-size: .9rem; font-weight: 500; border: 1px solid var(--accent); background: var(--accent);
+  color: var(--accent-fg); border-radius: 8px; padding: 6px 14px; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--warn-line); outline-offset: 2px; }
+button.done { background: transparent; color: var(--accent); }
+.check { background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 10px; padding: 12px 16px; }
+.check ul { margin: 0; padding-left: 20px; }
+.hint { font-size: .85rem; color: var(--muted); margin: 0; }
+#article { border-top: 1px dashed var(--line); padding-top: 12px; }
+#article p { margin: 0; }
+#article img { max-width: 100%; border-radius: 6px; display: block; }
+#article .cap { color: var(--muted); font-size: .9rem; text-align: center; }
+#article .place { border: 1px dashed var(--accent); border-radius: 6px; padding: 8px 12px; color: var(--accent); font-weight: 500; }
+</style>
+<main class="wrap">
+  <h1>{{PAGE_TITLE}} · 네이버 블로그 붙여넣기</h1>
+  <section class="check" aria-label="발행 전 확인"><h2>발행 전에 확인하세요</h2><ul>{{CHECKS}}</ul></section>
+  <section class="step">
+    <div class="step-head"><span class="step-label">1. 제목 칸에</span><button type="button" id="copy-title">제목 복사</button></div>
+    <div class="value">{{TITLE}}</div>
+  </section>
+  <section class="step">
+    <div class="step-head"><span class="step-label">2. 본문에 (글 + 사진)</span><button type="button" id="copy-body">본문 전체 복사</button></div>
+    <p class="hint">PC 크롬에서 열어 복사한 뒤 네이버 블로그 글쓰기 본문에 붙여 넣으세요.
+      사진이 안 들어가면 사진에서 오른쪽 클릭 → 이미지 복사로 하나씩 넣을 수 있어요.
+      맨 끝 [📍 장소] 자리는 에디터의 '장소' 버튼으로 지도를 넣으세요.</p>
+    <div id="article">
+{{ARTICLE}}
+    </div>
+  </section>
+  <section class="step">
+    <div class="step-head"><span class="step-label">3. 태그 칸에</span><button type="button" id="copy-tags">태그 복사</button></div>
+    <div class="tags">{{TAGS}}</div>
+  </section>
+</main>
+<script>
+const DATA = {"title": "{{TITLE}}", "tags": "{{TAGS}}"};
+function done(btn) { btn.classList.add("done"); btn.textContent = "복사됨 ✓"; }
+function copySelection(node) {
+  const range = document.createRange(); range.selectNodeContents(node);
+  const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  let ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+  return ok;
+}
+async function copyText(btn, text, node) {
+  try { await navigator.clipboard.writeText(text); done(btn); }
+  catch (e) { if (copySelection(node)) done(btn); else btn.textContent = "직접 선택해서 복사하세요"; }
+}
+document.getElementById("copy-title").addEventListener("click", (ev) =>
+  copyText(ev.currentTarget, DATA.title, document.querySelector(".value")));
+document.getElementById("copy-tags").addEventListener("click", (ev) =>
+  copyText(ev.currentTarget, DATA.tags, document.querySelector(".tags")));
+document.getElementById("copy-body").addEventListener("click", async (ev) => {
+  const btn = ev.currentTarget, node = document.getElementById("article");
+  // 화면에서 선택해 복사하는 방식이 에디터에서 가장 자연스럽게 붙는다 (글 + 사진)
+  if (copySelection(node)) { done(btn); return; }
+  try {
+    const item = new ClipboardItem({
+      "text/html": new Blob([node.innerHTML], { type: "text/html" }),
+      "text/plain": new Blob([node.innerText], { type: "text/plain" }),
+    });
+    await navigator.clipboard.write([item]); done(btn);
+  } catch (e) { btn.textContent = "본문을 드래그해서 복사하세요"; }
+});
+</script>
+
+</body></html>

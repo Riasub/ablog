@@ -1,0 +1,6 @@
+# 개인 설정 (이 노트북 전용 권한)
+.claude/settings.local.json
+
+# 글별 사진·초안 (용량이 크고 개인 사진 포함)
+posts/*
+!posts/.gitkeep
